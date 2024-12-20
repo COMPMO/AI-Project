@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Fortnite Shooter</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background-color: #87CEEB; /* Fortnite-themed sky blue */
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-shadow: 1px 1px 4px black;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // Canvas Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game variables
+        let score = 0;
+        const targets = [];
+        const targetSize = 50; // Size of the target
+        const playerSize = 20; // Size of the shooting reticle
+        const spawnInterval = 1000; // Spawn a new target every 1 second
+
+        // Update score display
+        const scoreDisplay = document.getElementById('score');
+        function updateScore(points) {
+            score += points;
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        // Player (reticle)
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            draw() {
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, playerSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        };
+
+        // Load target image (Raven Team Leader)
+        const targetImage = new Image();
+        targetImage.src = 'PLACEHOLDER_IMAGE_URL'; // Replace with your actual image path
+
+        // Target object
+        class Target {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = targetSize;
+                this.height = targetSize;
+                this.hit = false;
+            }
+
+            draw() {
+                if (!this.hit) {
+                    ctx.drawImage(targetImage, this.x, this.y, this.width, this.height);
+                }
+            }
+
+            isHit(mouseX, mouseY) {
+                return (
+                    mouseX > this.x &&
+                    mouseX < this.x + this.width &&
+                    mouseY > this.y &&
+                    mouseY < this.y + this.height
+                );
+            }
+        }
+
+        // Spawn a new target
+        function spawnTarget() {
+            const x = Math.random() * (canvas.width - targetSize);
+            const y = Math.random() * (canvas.height - targetSize);
+            targets.push(new Target(x, y));
+        }
+
+        // Shooting logic
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            targets.forEach((target) => {
+                if (target.isHit(mouseX, mouseY)) {
+                    target.hit = true; // Mark the target as hit
+                    updateScore(10); // Increment score
+                }
+            });
+        });
+
+        // Game Loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player (reticle)
+            player.draw();
+
+            // Draw and update targets
+            targets.forEach((target) => target.draw());
+
+            // Remove hit targets
+            for (let i = targets.length - 1; i >= 0; i--) {
+                if (targets[i].hit) targets.splice(i, 1);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Handle mouse movement
+        canvas.addEventListener('mousemove', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            player.x = event.clientX - rect.left;
+            player.y = event.clientY - rect.top;
+        });
+
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Start game
+        targetImage.onload = () => {
+            setInterval(spawnTarget, spawnInterval); // Spawn targets once the image is loaded
+            gameLoop();
+        };
+    </script>
+</body>
+</html>

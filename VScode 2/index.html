@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortnite Clicker Game</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: radial-gradient(circle, rgba(16,34,69,1) 0%, rgba(6,12,26,1) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            text-align: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        h1 {
+            font-size: 40px;
+            margin-bottom: 30px;
+            color: #00FFEA;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+
+        /* V-Bucks Counter */
+        #vbucksCounter {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 24px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 2px solid #00FFEA;
+            color: #00FFEA;
+            box-shadow: 0 0 25px #00FFEA;
+            font-weight: bold;
+        }
+
+        /* Clickable Area (Main Button) - Circular */
+        #clickable {
+            width: 250px;
+            height: 250px;
+            background: url(V.png) no-repeat center center;
+            background-size: cover; /* Ensures the image fills the circle */
+            border-radius: 50%; /* Makes the button circular */
+            cursor: pointer;
+            box-shadow: 0 0 20px #FFD700;
+            transition: transform 0.3s ease-in-out, box-shadow 0.2s;
+        }
+
+        #clickable:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 35px #FFD700;
+        }
+
+        /* Shop Section */
+        #shop {
+            margin-top: 60px;
+            background: rgba(40, 40, 40, 0.85);
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 12px;
+            border: 2px solid #0077FF;
+            box-shadow: 0 0 30px rgba(0, 119, 255, 0.8);
+        }
+
+        #shop h2 {
+            font-size: 28px;
+            color: #00CCFF;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        /* Upgrade Button */
+        .upgrade {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            background: linear-gradient(to right, #0077FF, #00CCFF);
+            border-radius: 10px;
+            margin: 20px 0;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            font-size: 18px;
+        }
+
+        .upgrade:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+
+        .upgrade img {
+            width: 50px;
+            height: 50px;
+            margin-right: 20px;
+            border-radius: 5px;
+            border: 2px solid white;
+        }
+
+        .upgrade span {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .upgrade span:last-child {
+            color: #FFD700;
+        }
+
+        /* Added Dynamic Pop-Up Effects */
+        .pop-up {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #FFD700;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px #FFD700;
+            font-size: 20px;
+            display: none;
+            z-index: 100;
+        }
+
+        /* Animation for V-Bucks Gain */
+        @keyframes animateVbucks {
+            0% {
+                color: #00FFEA;
+                transform: scale(1);
+            }
+            50% {
+                color: #FFD700;
+                transform: scale(1.1);
+            }
+            100% {
+                color: #00FFEA;
+                transform: scale(1);
+            }
+        }
+
+        /* Styles for Active Pop-Up */
+        .pop-up.active {
+            display: block;
+            animation: animateVbucks 0.5s ease-in-out;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Fortnite Clicker Game</h1>
+
+    <!-- V-Bucks Counter -->
+    <div id="vbucksCounter">V-Bucks: 0</div>
+
+    <!-- Clickable Element -->
+    <div id="clickable"></div>
+
+    <!-- Pop-Up Effect for V-Bucks Gain -->
+    <div id="pop-up" class="pop-up"></div>
+
+    <!-- Shop Section -->
+    <div id="shop">
+        <h2>Shop</h2>
+        <div id="upgrades"></div>
+    </div>
+
+    <script>
+        // Game variables
+        let vbucks = 0;
+        let vbucksPerClick = 1;
+        let vbucksPerSecond = 0;
+
+        // Upgrade data (expandable)
+        const upgrades = [
+            { name: "Battle Bus", cost: 50, vbucksPerSecond: 1, image: 'BLUE.png' },
+            { name: "Supply Drop", cost: 200, vbucksPerSecond: 5, image: 'drop.png' },
+            { name: "Tilted Towers", cost: 1000, vbucksPerSecond: 20, image: 'tilted.png' },
+            { name: "Victory Crown", cost: 5000, vbucksPerSecond: 100, image: 'crown.png' },
+            { name: "The Zero Point", cost: 20000, vbucksPerSecond: 500, image: 'zp.png' },
+        ];
+
+        // DOM Elements
+        const vbucksCounter = document.getElementById("vbucksCounter");
+        const clickable = document.getElementById("clickable");
+        const upgradesContainer = document.getElementById("upgrades");
+        const popUp = document.getElementById("pop-up");
+
+        // Update V-Bucks Counter
+        function updateVbucksCounter() {
+            vbucksCounter.textContent = `V-Bucks: ${Math.floor(vbucks)}`;
+        }
+
+        // Pop-Up Effect when V-Bucks are gained
+        function showPopUp(message) {
+            popUp.textContent = message;
+            popUp.classList.add("active");
+            setTimeout(() => {
+                popUp.classList.remove("active");
+            }, 2000);
+        }
+
+        // Handle clicking the main button
+        clickable.addEventListener("click", () => {
+            vbucks += vbucksPerClick;
+            updateVbucksCounter();
+            showPopUp(`+${vbucksPerClick} V-Bucks!`);
+        });
+
+        // Add upgrades to the shop
+        upgrades.forEach((upgrade, index) => {
+            const upgradeDiv = document.createElement("div");
+            upgradeDiv.className = "upgrade";
+            upgradeDiv.innerHTML = `
+                <img src="${upgrade.image}" alt="${upgrade.name}">
+                <span>${upgrade.name}</span>
+                <span>+${upgrade.vbucksPerSecond} V-Bucks/sec</span>
+                <span>Cost: ${upgrade.cost}</span>
+            `;
+            upgradeDiv.addEventListener("click", () => {
+                if (vbucks >= upgrade.cost) {
+                    vbucks -= upgrade.cost;
+                    vbucksPerSecond += upgrade.vbucksPerSecond;
+                    upgrade.cost = Math.floor(upgrade.cost * 1.5); // Increase cost
+                    upgradeDiv.querySelector("span:nth-child(4)").textContent = `Cost: ${upgrade.cost}`;
+                    updateVbucksCounter();
+                    showPopUp(`Bought: ${upgrade.name}`);
+                } else {
+                    alert("Not enough V-Bucks!");
+                }
+            });
+            upgradesContainer.appendChild(upgradeDiv);
+        });
+
+        // Generate V-Bucks over time
+        setInterval(() => {
+            vbucks += vbucksPerSecond / 10; // Gain V-Bucks every 100ms
+            updateVbucksCounter();
+        }, 100);
+    </script>
+
+</body>
+</html>
